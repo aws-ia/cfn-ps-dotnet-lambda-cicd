@@ -1,0 +1,3 @@
+// Edit this placeholder text to accurately describe your architecture.
+
+This Quick Start uses AWS SAM to deploy a serverless application into an AWS account. As part of this deployment, it will create resources such as IAM roles, an API Gateway, and a Lambda function. For further detail on resources this Quick Start deploys, see the link:#_architecture[Architecture] section.

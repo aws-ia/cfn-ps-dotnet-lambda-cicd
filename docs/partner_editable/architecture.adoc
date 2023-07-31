@@ -1,0 +1,21 @@
+:xrefstyle: short
+
+Deploying this Quick Start with default parameters builds the following {partner-product-short-name} environment in the AWS Cloud.
+
+// Replace this example diagram with your own. Follow our wiki guidelines: https://w.amazon.com/bin/view/AWS_Quick_Starts/Process_for_PSAs/#HPrepareyourarchitecturediagram. Upload your source PowerPoint file to the GitHub {deployment name}/docs/images/ directory in this repo. 
+
+[#architecture1]
+.Quick Start architecture for {partner-product-short-name} on AWS
+image::../images/dotnet-lambda-cicd-architecture-diagram.png[Architecture]
+
+As shown in <<architecture1>>, the Quick Start sets up the following:
+
+* CodePipeline to create a pipeline with source, build, and deploy stages. The pipeline is invoked when a developer commits a code change to the CodeCommit repository. 
+** A CodeCommit repository to host the application source code.
+** AWS CodeBuild to generate an AWS CloudFormation template from the source code.
+** AWS CodeDeploy to deploy the template.
+* CloudFormation to provision and configure the AWS Lambda application.
+* An AWS Lambda function to run the code.
+* API Gateway endpoint to expose the application to the internet.
+* An Amazon Simple Storage Service (Amazon S3) bucket to store pipeline artifacts.
+* AWS Identification and Access Management (IAM) for IAM roles used by CodeBuild, CodeDeploy, and CloudFormation.

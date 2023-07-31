@@ -1,0 +1,6 @@
+// Replace the content in <>
+// Briefly describe the software. Use consistent and clear branding. 
+// Include the benefits of using the software on AWS, and provide details on usage scenarios.
+
+This Quick Start builds a continuous integration and delivery (CI/CD) pipeline for serverless .NET applications on the Amazon Web Services (AWS) Cloud. It deploys an AWS CodeCommit repository with a sample AWS Lambda application defined in an https://aws.amazon.com/serverless/sam/[AWS Serverless Application Model (AWS SAM)] template. Pushing changes to modify the application invokes AWS CodePipeline. The pipeline builds and deploys the application using AWS CloudFormation and exposes it to the internet with Amazon API Gateway.
+

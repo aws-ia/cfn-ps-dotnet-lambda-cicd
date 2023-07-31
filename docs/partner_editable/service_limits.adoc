@@ -1,0 +1,15 @@
+// Replace the <n> in each row to specify the number of resources used in this deployment. Remove the rows for resources that aren’t used.
+|===
+|Resource |This deployment uses
+
+// Space needed to maintain table headers
+|S3 buckets |1
+|CloudFormation stacks |2
+|IAM roles |5
+|API Gateway endpoints |1
+|Lambda functions |1
+|CloudWatch log groups |1
+|CodeCommit repositories |1
+|CodePipeline pipelines |1
+|CodeBuild projects |1
+|===

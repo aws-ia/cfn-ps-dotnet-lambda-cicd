@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This template deploys a serverless .NET CI/CD environment (qs-1sctmf6gg)
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W9006
+  QuickStartDocumentation:
+    EntrypointName: Deployment parameters
+    Order: "1"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Quick Start parameters
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+    ParameterLabels:
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 key prefix (path in the bucket inclusive of `quickstart-qumulo-cloud-q` folder)
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
+    ConstraintDescription:
+      The Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a 
+      hyphen (-).
+    Default: aws-quickstart
+    Description:
+      'Name of the S3 bucket for your copy of the Quick Start assets. 
+      Keep the default name unless you are customizing the template. 
+      Changing the name updates code references to point to a new Quick 
+      Start location. This name can include numbers, lowercase letters, 
+      uppercase letters, and hyphens, but do not start or end with a hyphen (-). 
+      See https://aws-quickstart.github.io/option1.html.'
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: '^[0-9a-zA-Z-/]*$'
+    ConstraintDescription:
+      The Quick Start S3 key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slashes (/).
+    Default: quickstart-dotnet-lambda-cicd/
+    Description:
+      'S3 key prefix that is used to simulate a directory for your copy of the 
+      Quick Start assets. Keep the default prefix unless you are customizing 
+      the template. Changing this prefix updates code references to point to 
+      a new Quick Start location. This prefix can include numbers, lowercase 
+      letters, uppercase letters, hyphens (-), and forward slashes (/). 
+      See https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html 
+      and https://aws-quickstart.github.io/option1.html.'
+    Type: String
+Mappings:
+  CodeBuildImages:
+    DotNet:
+      ImageName: aws/codebuild/standard:5.0
+## Resources    
+Resources:
+## S3 Bucket for Artifacts and State
+  ArtifactStore:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-ArtifactStoreBucket            
+        - Key: Application
+          Value: !Ref 'AWS::StackName'        
+## IAM Roles
+  # CodeBuild
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - EIAMPolicyWildcardResource
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource: "*"
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+              - Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactStore}/*
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetObjectVersion
+  # CodePipeline
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              # Allow access to CodeCommit
+              - Resource: !GetAtt SourceRepository.Arn
+                Effect: Allow
+                Action:
+                  - 'codecommit:GetBranch'
+                  - 'codecommit:GetCommit'
+                  - 'codecommit:UploadArchive'
+                  - 'codecommit:GetUploadArchiveStatus'
+                  - 'codecommit:CancelUploadArchive'
+              - Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactStore}/*
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+              - Resource: [ !GetAtt CodeBuildServiceRole.Arn, !GetAtt DeploymentRole.Arn ]
+                Effect: Allow
+                Action: iam:PassRole                  
+              - Resource: !GetAtt CodeBuildProject.Arn
+                Effect: Allow
+                Action:
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
+              - Resource: !Sub arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/*/*
+                Effect: Allow
+                Action:
+                - cloudformation:DescribeStacks
+                - cloudformation:CreateStack
+                - cloudformation:DeleteStack
+                - cloudformation:UpdateStack
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Resource: !Sub arn:${AWS::Partition}:s3:::${ArtifactStore}/*
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AWSCloudFormationFullAccess
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/IAMFullAccess
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AWSLambda_FullAccess
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonAPIGatewayAdministrator
+
+  # CodeDeploy
+  CodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSCodeDeployRole
+
+## CI/CD
+  # CodeCommit and initial population
+  SourceRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties: 
+      RepositoryName: !Sub ${AWS::StackName}-repo
+      RepositoryDescription: Hosts the code used for the Serverless application.
+      Code:
+        BranchName: main
+        S3:
+          Bucket: !Ref QSS3BucketName
+          Key: !Sub ${QSS3KeyPrefix}serverless-cicd.zip
+
+  # CodePipeline
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineServiceRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactStore
+      Stages:
+        - Name: Source
+          Actions:
+            - InputArtifacts: []
+              Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeCommit
+              Configuration:
+                BranchName: main
+                RepositoryName: !GetAtt SourceRepository.Name
+              OutputArtifacts:
+                - Name: SourceCode
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: '1'
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              InputArtifacts:
+                - Name: SourceCode
+              OutputArtifacts:
+                - Name: BuildOutput                
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: '1'
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: REPLACE_ON_FAILURE
+                StackName: !Sub ${AWS::StackName}-Deploy
+                Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+                RoleArn: !GetAtt DeploymentRole.Arn
+                TemplatePath: BuildOutput::packaged-template.yml
+              InputArtifacts:
+                - Name: BuildOutput
+              RunOrder: 1
+  # CodeBuild 
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Source:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        PrivilegedMode: true # Allows access to Docker daemon
+        Image: !FindInMap [ CodeBuildImages, DotNet, ImageName ]
+        EnvironmentVariables:
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: AWS_DEFAULT_REGION
+            Value: !Ref AWS::Region
+          - Name: ARTIFACT_BUCKET
+            Value: !Ref ArtifactStore
+      Name: !Ref AWS::StackName
+      ServiceRole: !Ref CodeBuildServiceRole
+
+## Outputs     
+Outputs:
+  RepoUrl:
+    Description: CodeCommit repository URL.
+    Value: !GetAtt SourceRepository.CloneUrlHttp
+  CodePipelineName:
+    Description: CodePipeline pipeline name.
+    Value: !Ref Pipeline
+  CodePipelineUrl:
+    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
+  Postdeployment:
+    Description: See the deployment guide for postdeployment steps.
+    Value: https://fwd.aws/EvrJV?
+  

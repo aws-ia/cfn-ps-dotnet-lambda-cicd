@@ -1,0 +1,32 @@
+// Add steps as necessary for accessing the software, post-configuration, and testing. Don’t include full usage instructions for your software, but add links to your product documentation for that information.
+//Should any sections not be applicable, remove them
+
+== Test the deployment
+After the stack operation completes, the following output values display on the *Outputs* tab of the AWS CloudFormation console.
+
+|===
+|Ouput |Description
+
+|`RepoUrl` |URL of the CodeCommit repository that you can clone and edit to invoke the pipeline and application deployment.
+|`CodePipelineUrl` |URL of the CodePipeline pipeline.
+|===
+
+After deploying this Quick Start, a build of the application starts. You can use your browser to navigate to the CodePipeline URL to observe the build process. After the build completes, the deployment process for the application creates a CloudFormation named `<Quick Start stack name>-Deploy` using the name you enter when launching this Quick Start. 
+
+The stack also includes an output parameter that can be used to view your deployed application:
+
+|===
+|Ouput |Description
+
+|`ServerlessExampleApi` |API Gateway URL that exposes the application.
+|===
+  
+== Postdeployment steps
+// If post-deployment steps are required, add them here. If not, remove the heading
+Once you have deployed this Quick Start, you can use the CodeCommit repository URL to clone the repo and modify the application. Changes pushed to the repository invoke CodePipeline and a deployment of the application.
+
+This Quick Start uses CloudFormation to deploy an application using a IAM role created by the Quick Start template. To avoid an IAM role error when deleting the Quick Start template stack, ensure that you first delete the deployed application stack.
+
+== Best practices for using {partner-product-short-name} on AWS
+// Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
+This Quick Start uses https://aws.amazon.com/serverless/sam/[AWS Serverless Application Model] to define and deploy an application. While you are able and encouraged to modify the application code, it is recommended that you maintain the definition of the application in the AWS SAM template.
