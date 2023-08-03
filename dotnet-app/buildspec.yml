@@ -1,0 +1,16 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+        dotnet: latest
+  build:
+    commands:
+      # Compile our .NET code - the compiled assemblies will be delivered
+      # to the build sub-folder.
+      - sam build -b build -t template.yaml
+      # Package the compiled assemblies, upload to S3, and create a new
+      # CloudFormation template that uses the newly-generated Zip file.
+      - sam package -t build/template.yaml --s3-bucket $ARTIFACT_BUCKET --output-template-file packaged-template.yml
+artifacts:
+  files:
+    - packaged-template.yml
