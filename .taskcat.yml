@@ -1,6 +1,6 @@
 project:
   owner: quickstart-eng@amazon.com
-  name: quickstart-dotnet-lambda-cicd
+  name: cfn-ps-dotnet-lambda-cicd
   regions:
     - ap-northeast-1
     - ap-northeast-2
