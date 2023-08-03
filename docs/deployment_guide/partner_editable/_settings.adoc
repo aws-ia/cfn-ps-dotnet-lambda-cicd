@@ -1,17 +1,15 @@
-:partner-solution-project-name: partner-solution-repo-name
-:partner-solution-github-org: aws-quickstart
-:partner-product-name: Full Product Name
-:partner-product-short-name: Product Name
-:partner-company-name: Example Company Name, Ltd.
-:doc-month: January
+:partner-solution-project-name: cfn-ps-dotnet-lambda-cicd
+:partner-product-name: CI/CD Pipeline for .NET Serverless Applications
+:partner-product-short-name: CI/CD Pipeline for .NET Serverless Applications
+//:partner-company-name: Example Company Name, Ltd.
+:doc-month: July
 :doc-year: 2023
-:partner-contributors: John Smith, {partner-company-name}
-// :other-contributors: Akua Mansa, Trek10
-:aws-contributors: Janine Singh, AWS IoT Partner team
-:aws-ia-contributors: Toni Jones, AWS Integration & Automation team
+//:partner-contributors: Shuai Ye, Michael McConnell, and John Smith, {partner-company-name}
+:aws-contributors: Andy Hopper, AWS Microsoft Specialist SA team
 :deployment_time: 15 minutes
 :default_deployment_region: us-east-1
-// :private_repo:
-
-
-// For instructions on creating this deployment guide, refer to "Build your AWS Partner Solution documentation" (https://aws-ia-us-west-2.s3.us-west-2.amazonaws.com/docs/content/index.html#/).
+:parameters_as_appendix:
+// Uncomment the following two attributes if you are using an AWS Marketplace listing.
+// Additional content will be generated automatically based on these attributes.
+// :marketplace_subscription:
+// :marketplace_listing_url: https://example.com/
